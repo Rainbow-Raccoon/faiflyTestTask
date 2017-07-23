@@ -1,10 +1,15 @@
 package vlad.zamashka.com.faiflytesttask;
 
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.JsonReader;
@@ -22,7 +27,7 @@ import static vlad.zamashka.com.faiflytesttask.R.layout.progress_bar_layout;
 
 public class ProgressBarActivity extends AppCompatActivity {
     private SharedPreferences settings = null;
-    private boolean firstRun;
+    private boolean firstRun, connected;
     private Intent intentCountriesSpinner;
     private CountryDbHelper countryDbHelper = new CountryDbHelper(this);
 
@@ -36,18 +41,33 @@ public class ProgressBarActivity extends AppCompatActivity {
         firstRun = settings.getBoolean("firstRun", true);
         intentCountriesSpinner = new Intent(this, CountriesSpinnerActivity.class);
 
-        if (firstRun) {
+        if (isConnected()) {
+            if (firstRun) {
 
-            SharedPreferences.Editor settingsEditor = settings.edit();
-            settingsEditor.putBoolean("firstRun", false);
-            settingsEditor.commit();
+                SharedPreferences.Editor settingsEditor = settings.edit();
+                settingsEditor.putBoolean("firstRun", false);
+                settingsEditor.commit();
 
-            new GetDataToDatabase().execute("https://raw.githubusercontent.com/David-Haim/" +
-                    "CountriesToCitiesJSON/master/countriesToCities.json");
+                new GetDataToDatabase().execute("https://raw.githubusercontent.com/David-Haim/" +
+                        "CountriesToCitiesJSON/master/countriesToCities.json");
 
+            } else {
+                startActivity(intentCountriesSpinner);
+                finish();
+            }
         } else {
-            startActivity(intentCountriesSpinner);
-            finish();
+            AlertDialog.Builder alertBuilder;
+            alertBuilder = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault);
+            alertBuilder.setTitle("No internet connection.")
+                    .setMessage("Enable internet connection, please.")
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            finish();
+                        }
+                    })
+                    .show();
         }
 
     }
@@ -117,5 +137,12 @@ public class ProgressBarActivity extends AppCompatActivity {
             startActivity(intentCountriesSpinner);
             finish();
         }
+    }
+
+    private boolean isConnected() {
+        ConnectivityManager cm =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 }

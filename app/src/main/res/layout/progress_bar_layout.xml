@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="0.22"
         android:gravity="center"
-        android:text="Download data, whait please."
+        android:text="Download data, wait please."
         android:textColor="@color/colorPrimaryDark"
         android:textSize="20dp" />
 
